@@ -110,23 +110,8 @@ def _changelog_sections(mods: dict[int, Mod]) -> str:
 
 
 CHIP_ICONS = {
-    "baldursgate3": (
-        '<svg class="chip-icon" viewBox="0 0 24 24" fill="none" '
-        'stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" '
-        'stroke-linecap="round" aria-hidden="true">'
-        '<path d="M12 2 L21 7 L21 14 L12 22 L3 14 L3 7 Z"/>'
-        '<path d="M3 7 L12 12 L21 7"/>'
-        '<path d="M12 12 L12 22"/>'
-        "</svg>"
-    ),
-    "clairobscurexpedition33": (
-        '<svg class="chip-icon" viewBox="0 0 24 24" fill="currentColor" '
-        'aria-hidden="true">'
-        '<text x="12" y="17" text-anchor="middle" '
-        'font-family="Georgia, serif" font-style="italic" font-weight="700" '
-        'font-size="14">33</text>'
-        "</svg>"
-    ),
+    "baldursgate3": '<img class="chip-icon chip-icon-wide" src="assets/img/logo.png" alt="">',
+    "clairobscurexpedition33": '<img class="chip-icon chip-icon-square" src="assets/img/exp33-logo.svg" alt="">',
 }
 
 
@@ -221,15 +206,15 @@ CUSTOM_CSS = """
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1.25rem;
-    min-width: 11rem;          /* keeps geometry identical between pages */
+    gap: 0.7rem;
+    padding: 0.4rem 1.5rem;
+    min-width: 16rem;          /* both chips identical so info button stays put */
     border: none;
     background: transparent;
     border-radius: 9999px;
     cursor: pointer;
     font-family: 'Inter', sans-serif;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 700;
     letter-spacing: 0.01em;
     color: var(--text-secondary);
@@ -237,10 +222,12 @@ CUSTOM_CSS = """
     white-space: nowrap;
 }
 .game-chip .chip-icon {
-    width: 18px;
-    height: 18px;
     flex-shrink: 0;
+    object-fit: contain;
+    height: 34px;
 }
+.game-chip .chip-icon-wide  { width: auto; max-width: 80px; }
+.game-chip .chip-icon-square { width: 34px; }
 
 /* Reserve 4 digits of space for the mod count so the info button never moves
    when the number's character width changes (e.g. 14 vs 351 vs 1,309). */
