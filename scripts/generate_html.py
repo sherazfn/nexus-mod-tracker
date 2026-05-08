@@ -241,6 +241,15 @@ CUSTOM_CSS = """
     height: 18px;
     flex-shrink: 0;
 }
+
+/* Reserve 4 digits of space for the mod count so the info button never moves
+   when the number's character width changes (e.g. 14 vs 351 vs 1,309). */
+.header-stat-value {
+    display: inline-block;
+    min-width: 3.5ch;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
 .game-chip:hover {
     background: var(--bg-tertiary);
     color: var(--text-primary);
