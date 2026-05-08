@@ -104,14 +104,15 @@ def _game_switcher(active_slug: str) -> str:
     for g in GAMES:
         is_active = g["slug"] == active_slug
         cls = "platform-chip active" if is_active else "platform-chip"
+        onclick = "" if is_active else f"onclick=\"location.href='{g['filename']}'\""
         chips.append(
-            f'<a class="{cls}" href="{g["filename"]}" '
-            f'role="tab" aria-selected="{"true" if is_active else "false"}" '
-            f'style="text-decoration: none;">{g["label"]}</a>'
+            f'<button class="{cls}" type="button" {onclick} '
+            f'role="tab" aria-selected="{"true" if is_active else "false"}">'
+            f'{g["label"]}</button>'
         )
     return (
         '<div class="platform-filter" role="tablist" aria-label="Select game" '
-        'style="margin-top: 0.5rem;">'
+        'style="margin: 0.5rem 0 1.75rem;">'
         + "".join(chips)
         + "</div>"
     )
