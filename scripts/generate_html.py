@@ -194,7 +194,7 @@ CUSTOM_CSS = """
     border: 1px solid var(--border-color);
     border-radius: 9999px;
     box-shadow: var(--shadow-sm);
-    padding: 0.3rem;
+    padding: 0.4rem;
     gap: 0.3rem;
     margin-left: 0.75rem;
     pointer-events: auto;
@@ -224,10 +224,10 @@ CUSTOM_CSS = """
 .game-chip .chip-icon {
     flex-shrink: 0;
     object-fit: contain;
-    height: 34px;
+    height: 26px;
 }
-.game-chip .chip-icon-wide  { width: auto; max-width: 80px; }
-.game-chip .chip-icon-square { width: 34px; }
+.game-chip .chip-icon-wide  { width: auto; max-width: 64px; }
+.game-chip .chip-icon-square { width: 26px; }
 
 /* Reserve 4 digits of space for the mod count so the info button never moves
    when the number's character width changes (e.g. 14 vs 351 vs 1,309). */
