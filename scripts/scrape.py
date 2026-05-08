@@ -93,12 +93,19 @@ def scrape_game(s: requests.Session, slug: str) -> None:
         try:
             detail = get(s, f"/games/{slug}/mods/{mod_id}.json")
         except requests.HTTPError as e:
-            if e.response.status_code in (404, 403):
-                print(f"  [{i}/{len(fetch_ids)}] {mod_id}: skip ({e.response.status_code})")
+            if e.response.status_code in (404, 403, 410):
+                print(f"  [{i}/{len(fetch_ids)}] {mod_id}: skip detail ({e.response.status_code})")
                 continue
             raise
-        files = get(s, f"/games/{slug}/mods/{mod_id}/files.json")
-        detail["files"] = files.get("files", [])
+        try:
+            files = get(s, f"/games/{slug}/mods/{mod_id}/files.json")
+            detail["files"] = files.get("files", [])
+        except requests.HTTPError as e:
+            if e.response.status_code in (404, 403, 410):
+                print(f"  [{i}/{len(fetch_ids)}] {mod_id}: no files ({e.response.status_code})")
+                detail["files"] = []
+            else:
+                raise
         match = next((u for u in updated if u["mod_id"] == mod_id), None)
         if match:
             detail["latest_file_update"] = match["latest_file_update"]
