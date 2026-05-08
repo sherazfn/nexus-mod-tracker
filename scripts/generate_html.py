@@ -124,7 +124,6 @@ def _header(game: dict) -> str:
     return f"""<header class="app-header">
     <div class="header-content">
         <img src="{game['logo']}" alt="" class="header-logo">
-        <span class="header-title">{game['title']}</span>
         {game_tabs}
         <div class="header-stat">
             <span class="header-stat-value" id="total-mods">--</span>
@@ -186,7 +185,7 @@ CUSTOM_CSS = """
     object-fit: contain;
 }
 
-/* Game switcher — segmented control, mirrors the New/Updated tab-group. */
+/* Game switcher IS the page title — large segmented pill. */
 .header-game-tabs {
     display: inline-flex;
     align-items: center;
@@ -194,24 +193,29 @@ CUSTOM_CSS = """
     border: 1px solid var(--border-color);
     border-radius: 9999px;
     box-shadow: var(--shadow-sm);
-    padding: 0.25rem;
-    gap: 0.25rem;
-    margin-left: 0.5rem;
+    padding: 0.3rem;
+    gap: 0.3rem;
+    margin-left: 0.75rem;
     pointer-events: auto;
+    flex: 1 1 auto;
+    justify-content: flex-start;
+    max-width: max-content;
 }
 .game-chip {
     display: inline-flex;
     align-items: center;
-    padding: 0.25rem 0.75rem;
+    padding: 0.5rem 1.25rem;
     border: none;
     background: transparent;
     border-radius: 9999px;
     cursor: pointer;
     font-family: 'Inter', sans-serif;
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
     color: var(--text-secondary);
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 .game-chip:hover {
     background: var(--bg-tertiary);
