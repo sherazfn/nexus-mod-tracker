@@ -194,8 +194,8 @@ CUSTOM_CSS = """
     border: 1px solid var(--border-color);
     border-radius: 9999px;
     box-shadow: var(--shadow-sm);
-    padding: 0.4rem;
-    gap: 0.3rem;
+    padding: 0.65rem 0.75rem;
+    gap: 0.4rem;
     margin-left: 0.75rem;
     pointer-events: auto;
     flex: 1 1 auto;
