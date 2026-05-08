@@ -149,11 +149,13 @@ def _controls_row() -> str:
         <span class="date-nav-badge" style="display:none"></span>
     </div>
     <button class="today-btn" type="button" onclick="goToToday()">Today</button>
+    <span class="ctrl-sep" aria-hidden="true"></span>
     <div class="platform-filter inline" role="tablist" aria-label="Filter by platform">
         <button class="platform-chip active" data-filter="all" onclick="setPlatformFilter('all')" role="tab" aria-selected="true">All</button>
         <button class="platform-chip" data-filter="pc" onclick="setPlatformFilter('pc')" role="tab" aria-selected="false">PC</button>
         <button class="platform-chip" data-filter="console" onclick="setPlatformFilter('console')" role="tab" aria-selected="false">Console</button>
     </div>
+    <span class="ctrl-sep" aria-hidden="true"></span>
     <div class="sort-bar inline">
         <label class="sort-label" for="sort-select">Sort</label>
         <select id="sort-select" class="sort-select" onchange="setSortMode(this.value)">
@@ -184,34 +186,50 @@ CUSTOM_CSS = """
     object-fit: contain;
 }
 
-/* Game-switcher chips that live INSIDE the header. */
+/* Game switcher — segmented control, mirrors the New/Updated tab-group. */
 .header-game-tabs {
-    display: flex;
-    gap: 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 9999px;
+    box-shadow: var(--shadow-sm);
+    padding: 0.25rem;
+    gap: 0.25rem;
     margin-left: 0.5rem;
-}
-.game-chip {
-    background: rgba(255,255,255,0.04);
-    color: var(--text-secondary, #94a3b8);
-    border: 1px solid var(--border-color, #334155);
-    border-radius: 999px;
-    padding: 0.3rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
     pointer-events: auto;
 }
+.game-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border: none;
+    background: transparent;
+    border-radius: 9999px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
 .game-chip:hover {
-    color: var(--text-primary, #f1f5f9);
-    border-color: var(--gold-primary, #d4af37);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
 }
 .game-chip.active {
-    background: var(--gold-primary, #d4af37);
-    color: #1a1a1a;
-    border-color: var(--gold-primary, #d4af37);
+    background: linear-gradient(135deg, var(--gold-primary), var(--gold-secondary));
+    color: var(--bg-primary);
     cursor: default;
+}
+
+/* Vertical separator inside the controls row. */
+.ctrl-sep {
+    display: inline-block;
+    width: 1px;
+    height: 22px;
+    background: linear-gradient(180deg, transparent, var(--border-color), transparent);
+    margin: 0 0.25rem;
 }
 
 /* Single horizontal controls row replacing the stacked date-nav / platform / sort. */
