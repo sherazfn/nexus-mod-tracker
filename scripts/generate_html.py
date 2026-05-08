@@ -1,4 +1,8 @@
-"""Generate per-game HTML pages styled to match the bg3-mod-tracker UI."""
+"""Generate per-game HTML pages styled to match the bg3-mod-tracker UI.
+
+Layout: game switcher inside the header bar; a single controls row with
+date nav + Today button + platform filter + sort.
+"""
 
 from __future__ import annotations
 
@@ -6,14 +10,8 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from .changelog_data import Mod, ModUpdate, get_mods
-from .components import (
-    date_nav,
-    date_section,
-    empty_state,
-    html_document,
-    page_layout,
-    tabs_script,
-)
+from .components import date_section, empty_state, html_document, tabs_script
+from .components.modal import MODAL_SCRIPT, info_button, info_modal
 from .components.tabs import mod_card
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -25,7 +23,8 @@ GAMES = [
         "filename": "index.html",
         "title": "BG3 Nexus Mod Tracker",
         "logo": "assets/img/logo.png",
-        "bg_pattern": "assets/img/d20.svg",
+        "bg_kind": "svg",
+        "bg_url": "assets/img/d20.svg",
         "bg_tint_top": "rgba(201, 162, 39, 0.08)",
         "bg_tint_bottom": "rgba(139, 105, 20, 0.05)",
     },
@@ -35,22 +34,23 @@ GAMES = [
         "filename": "expedition33.html",
         "title": "Expedition 33 Nexus Mod Tracker",
         "logo": "assets/img/exp33-logo.svg",
-        "bg_pattern": "assets/img/exp33-pattern.svg",
+        "bg_kind": "tile",
+        "bg_url": "assets/img/exp33-bg.png",
+        "bg_tile_size": 220,
+        "bg_opacity": 0.05,
         "bg_tint_top": "rgba(232, 193, 77, 0.07)",
         "bg_tint_bottom": "rgba(120, 70, 90, 0.06)",
     },
 ]
 
-# Only render activity from the last N days; older history bloats the page.
 CUTOFF_DAYS = 30
 
 
+# ---------- changelog content ------------------------------------------------
+
+
 def _flatten(mods: dict[int, Mod]) -> list[tuple[Mod, ModUpdate]]:
-    out: list[tuple[Mod, ModUpdate]] = []
-    for m in mods.values():
-        for u in m.updates:
-            out.append((m, u))
-    return out
+    return [(m, u) for m in mods.values() for u in m.updates]
 
 
 def _cards(updates: list[tuple[Mod, ModUpdate]]) -> str:
@@ -73,9 +73,9 @@ def _cards(updates: list[tuple[Mod, ModUpdate]]) -> str:
     )
 
 
-def _changelog_content(mods: dict[int, Mod]) -> tuple[str, str]:
+def _changelog_sections(mods: dict[int, Mod]) -> str:
     if not mods:
-        return empty_state("No mods found"), ""
+        return empty_state("No mods found")
 
     cutoff = (datetime.now(timezone.utc) - timedelta(days=CUTOFF_DAYS)).date()
     by_date: dict[date, dict[str, list[tuple[Mod, ModUpdate]]]] = {}
@@ -86,11 +86,10 @@ def _changelog_content(mods: dict[int, Mod]) -> tuple[str, str]:
         by_date.setdefault(d, {"added": [], "updated": []})[u.update_type].append((m, u))
 
     if not by_date:
-        return empty_state("No mods updated in the last 30 days"), ""
+        return empty_state("No mods updated in the last 30 days")
 
-    sorted_dates = sorted(by_date.keys(), reverse=True)
     sections: list[str] = []
-    for i, day in enumerate(sorted_dates):
+    for i, day in enumerate(sorted(by_date.keys(), reverse=True)):
         new_mods = by_date[day]["added"]
         upd_mods = by_date[day]["updated"]
         sections.append(
@@ -104,29 +103,105 @@ def _changelog_content(mods: dict[int, Mod]) -> tuple[str, str]:
             )
         )
     sections.append(tabs_script())
-    return "\n".join(sections), date_nav()
+    return "\n".join(sections)
 
 
-GAME_SWITCHER_CSS = """
+# ---------- header + controls -----------------------------------------------
+
+
+def _header(game: dict) -> str:
+    chips = []
+    for g in GAMES:
+        is_active = g["slug"] == game["slug"]
+        cls = "game-chip active" if is_active else "game-chip"
+        onclick = "" if is_active else f"onclick=\"location.href='{g['filename']}'\""
+        chips.append(
+            f'<button class="{cls}" type="button" {onclick} '
+            f'aria-selected="{"true" if is_active else "false"}">{g["label"]}</button>'
+        )
+    game_tabs = '<div class="header-game-tabs" role="tablist">' + "".join(chips) + "</div>"
+
+    return f"""<header class="app-header">
+    <div class="header-content">
+        <img src="{game['logo']}" alt="" class="header-logo">
+        <span class="header-title">{game['title']}</span>
+        {game_tabs}
+        <div class="header-stat">
+            <span class="header-stat-value" id="total-mods">--</span>
+            <span>mods</span>
+        </div>
+        {info_button()}
+    </div>
+</header>
+<div class="toast" id="toast" aria-live="polite"></div>"""
+
+
+def _controls_row() -> str:
+    return """<div class="controls-row">
+    <div class="date-nav-inline">
+        <button class="date-nav-btn prev" onclick="prevDate()" aria-label="Previous date">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 12L6 8l4-4"/></svg>
+        </button>
+        <div class="date-nav-pill"><span class="date-nav-current">Loading...</span></div>
+        <button class="date-nav-btn next" onclick="nextDate()" aria-label="Next date">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 12l4-4-4-4"/></svg>
+        </button>
+        <span class="date-nav-badge" style="display:none"></span>
+    </div>
+    <button class="today-btn" type="button" onclick="goToToday()">Today</button>
+    <div class="platform-filter inline" role="tablist" aria-label="Filter by platform">
+        <button class="platform-chip active" data-filter="all" onclick="setPlatformFilter('all')" role="tab" aria-selected="true">All</button>
+        <button class="platform-chip" data-filter="pc" onclick="setPlatformFilter('pc')" role="tab" aria-selected="false">PC</button>
+        <button class="platform-chip" data-filter="console" onclick="setPlatformFilter('console')" role="tab" aria-selected="false">Console</button>
+    </div>
+    <div class="sort-bar inline">
+        <label class="sort-label" for="sort-select">Sort</label>
+        <select id="sort-select" class="sort-select" onchange="setSortMode(this.value)">
+            <option value="default">Default</option>
+            <option value="recent">Most recently updated</option>
+            <option value="popular">Most popular</option>
+            <option value="downloads">Downloads today</option>
+            <option value="subscribers">Most subscribed</option>
+            <option value="name-asc">Name A–Z</option>
+            <option value="name-desc">Name Z–A</option>
+            <option value="author-asc">Author A–Z</option>
+        </select>
+    </div>
+</div>"""
+
+
+# ---------- per-page CSS overrides ------------------------------------------
+
+
+CUSTOM_CSS = """
 <style>
-.game-switcher {
+/* Constrain header-logo height so BG3's wide PNG and Exp33's square SVG
+   don't change the header's vertical rhythm between pages. */
+.header-logo {
+    height: 44px;
+    width: auto;
+    max-width: 120px;
+    object-fit: contain;
+}
+
+/* Game-switcher chips that live INSIDE the header. */
+.header-game-tabs {
     display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin: 0.5rem 0 1.75rem;
+    gap: 0.4rem;
+    margin-left: 0.5rem;
 }
 .game-chip {
-    background: var(--surface, #1f2937);
+    background: rgba(255,255,255,0.04);
     color: var(--text-secondary, #94a3b8);
-    border: 1px solid var(--border, #334155);
+    border: 1px solid var(--border-color, #334155);
     border-radius: 999px;
-    padding: 0.35rem 0.9rem;
-    font-size: 0.8rem;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
     font-family: inherit;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    pointer-events: auto;
 }
 .game-chip:hover {
     color: var(--text-primary, #f1f5f9);
@@ -138,55 +213,137 @@ GAME_SWITCHER_CSS = """
     border-color: var(--gold-primary, #d4af37);
     cursor: default;
 }
+
+/* Single horizontal controls row replacing the stacked date-nav / platform / sort. */
+.controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+}
+.controls-row .date-nav-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.controls-row .platform-filter.inline,
+.controls-row .sort-bar.inline {
+    padding: 0;
+    margin: 0;
+}
+
+/* Today button — chip styled, highlights gold when on the latest section. */
+.today-btn {
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary, #94a3b8);
+    border: 1px solid var(--border-color, #334155);
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.today-btn:hover {
+    color: var(--text-primary, #f1f5f9);
+    border-color: var(--gold-primary, #d4af37);
+}
+.today-btn.active {
+    background: var(--gold-primary, #d4af37);
+    color: #1a1a1a;
+    border-color: var(--gold-primary, #d4af37);
+}
+
+/* Hide the legacy floating LATEST badge (kept hidden in DOM for JS compat). */
+.date-nav-badge { display: none !important; }
 </style>
 """
-
-
-def _game_switcher(active_slug: str) -> str:
-    chips = []
-    for g in GAMES:
-        is_active = g["slug"] == active_slug
-        cls = "game-chip active" if is_active else "game-chip"
-        onclick = "" if is_active else f"onclick=\"location.href='{g['filename']}'\""
-        chips.append(
-            f'<button class="{cls}" type="button" {onclick} '
-            f'role="tab" aria-selected="{"true" if is_active else "false"}">'
-            f'{g["label"]}</button>'
-        )
-    return (
-        GAME_SWITCHER_CSS
-        + '<div class="game-switcher" role="tablist" aria-label="Select game">'
-        + "".join(chips)
-        + "</div>"
-    )
 
 
 def _per_game_background(game: dict) -> str:
-    return f"""
-<style>
+    if game["bg_kind"] == "svg":
+        return f"""<style>
 body {{
     background-image:
-        url("{game['bg_pattern']}"),
+        url("{game['bg_url']}"),
         radial-gradient(ellipse at top, {game['bg_tint_top']}, transparent 60%),
         radial-gradient(ellipse at bottom, {game['bg_tint_bottom']}, transparent 60%) !important;
 }}
-</style>
+</style>"""
+
+    # tile: PNG that needs CSS-applied opacity via a pseudo-element overlay.
+    return f"""<style>
+body {{
+    background-image:
+        radial-gradient(ellipse at top, {game['bg_tint_top']}, transparent 60%),
+        radial-gradient(ellipse at bottom, {game['bg_tint_bottom']}, transparent 60%) !important;
+    position: relative;
+}}
+body::before {{
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("{game['bg_url']}");
+    background-repeat: repeat;
+    background-size: {game['bg_tile_size']}px {game['bg_tile_size']}px;
+    opacity: {game['bg_opacity']};
+    pointer-events: none;
+    z-index: 0;
+}}
+</style>"""
+
+
+TODAY_BTN_SCRIPT = """
+<script>
+(function () {
+    function syncTodayBtn() {
+        const sections = document.querySelectorAll('.date-section');
+        if (!sections.length) return;
+        let activeIdx = Array.from(sections).findIndex(s => s.classList.contains('active'));
+        if (activeIdx < 0) activeIdx = 0;
+        const btn = document.querySelector('.today-btn');
+        if (btn) btn.classList.toggle('active', activeIdx === 0);
+    }
+    window.goToToday = function () {
+        while (typeof currentDateIndex !== 'undefined' && currentDateIndex > 0) {
+            nextDate();
+        }
+        syncTodayBtn();
+    };
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('.date-nav-btn')) {
+            requestAnimationFrame(syncTodayBtn);
+        }
+    });
+    window.addEventListener('load', syncTodayBtn);
+    document.addEventListener('DOMContentLoaded', syncTodayBtn);
+})();
+</script>
 """
+
+
+# ---------- assembly ---------------------------------------------------------
 
 
 def generate_one(game: dict) -> int:
     mods = get_mods(game["slug"])
-    content, nav = _changelog_content(mods)
-    layout = page_layout(
-        title=game["title"],
-        content=content,
-        hero_image_url=game["logo"],
-        date_nav_html=nav,
-    )
-    layout = layout.replace("</header>", "</header>\n" + _game_switcher(game["slug"]), 1)
-    html = html_document(game["title"], layout)
-    # Inject per-game body background (overrides the bg3-defaulted body bg in styles/base.py).
-    html = html.replace("</head>", _per_game_background(game) + "</head>", 1)
+    sections = _changelog_sections(mods)
+    body = f"""{_header(game)}
+{_controls_row()}
+<main class="changelog-container">
+    <div class="changelog-stack">
+{sections}
+    </div>
+</main>
+{info_modal()}
+{MODAL_SCRIPT}
+{TODAY_BTN_SCRIPT}"""
+    html = html_document(game["title"], body)
+    html = html.replace("</head>", CUSTOM_CSS + _per_game_background(game) + "</head>", 1)
     (ROOT / game["filename"]).write_text(html, encoding="utf-8")
     return len(mods)
 
