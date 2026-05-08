@@ -109,21 +109,43 @@ def _changelog_sections(mods: dict[int, Mod]) -> str:
 # ---------- header + controls -----------------------------------------------
 
 
+CHIP_ICONS = {
+    "baldursgate3": (
+        '<svg class="chip-icon" viewBox="0 0 24 24" fill="none" '
+        'stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" '
+        'stroke-linecap="round" aria-hidden="true">'
+        '<path d="M12 2 L21 7 L21 14 L12 22 L3 14 L3 7 Z"/>'
+        '<path d="M3 7 L12 12 L21 7"/>'
+        '<path d="M12 12 L12 22"/>'
+        "</svg>"
+    ),
+    "clairobscurexpedition33": (
+        '<svg class="chip-icon" viewBox="0 0 24 24" fill="currentColor" '
+        'aria-hidden="true">'
+        '<text x="12" y="17" text-anchor="middle" '
+        'font-family="Georgia, serif" font-style="italic" font-weight="700" '
+        'font-size="14">33</text>'
+        "</svg>"
+    ),
+}
+
+
 def _header(game: dict) -> str:
     chips = []
     for g in GAMES:
         is_active = g["slug"] == game["slug"]
         cls = "game-chip active" if is_active else "game-chip"
         onclick = "" if is_active else f"onclick=\"location.href='{g['filename']}'\""
+        icon = CHIP_ICONS.get(g["slug"], "")
         chips.append(
             f'<button class="{cls}" type="button" {onclick} '
-            f'aria-selected="{"true" if is_active else "false"}">{g["label"]}</button>'
+            f'aria-selected="{"true" if is_active else "false"}">'
+            f'{icon}<span class="chip-label">{g["label"]}</span></button>'
         )
     game_tabs = '<div class="header-game-tabs" role="tablist">' + "".join(chips) + "</div>"
 
     return f"""<header class="app-header">
     <div class="header-content">
-        <img src="{game['logo']}" alt="" class="header-logo">
         {game_tabs}
         <div class="header-stat">
             <span class="header-stat-value" id="total-mods">--</span>
@@ -176,14 +198,8 @@ def _controls_row() -> str:
 
 CUSTOM_CSS = """
 <style>
-/* Constrain header-logo height so BG3's wide PNG and Exp33's square SVG
-   don't change the header's vertical rhythm between pages. */
-.header-logo {
-    height: 44px;
-    width: auto;
-    max-width: 120px;
-    object-fit: contain;
-}
+/* Smooth cross-document fade when navigating between BG3 and Exp33 pages. */
+@view-transition { navigation: auto; }
 
 /* Game switcher IS the page title — large segmented pill. */
 .header-game-tabs {
@@ -204,7 +220,10 @@ CUSTOM_CSS = """
 .game-chip {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     padding: 0.5rem 1.25rem;
+    min-width: 11rem;          /* keeps geometry identical between pages */
     border: none;
     background: transparent;
     border-radius: 9999px;
@@ -216,6 +235,11 @@ CUSTOM_CSS = """
     color: var(--text-secondary);
     transition: all 0.2s ease;
     white-space: nowrap;
+}
+.game-chip .chip-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
 }
 .game-chip:hover {
     background: var(--bg-tertiary);
