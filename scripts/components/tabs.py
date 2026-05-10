@@ -41,9 +41,9 @@ def platform_filter_bar() -> str:
     """Filter chip row above the changelog (All / PC / Console)."""
     return """
         <div class="platform-filter" role="tablist" aria-label="Filter by platform">
-            <button class="platform-chip active" data-filter="all" onclick="setPlatformFilter('all')" role="tab" aria-selected="true">All</button>
-            <button class="platform-chip" data-filter="pc" onclick="setPlatformFilter('pc')" role="tab" aria-selected="false">PC</button>
-            <button class="platform-chip" data-filter="console" onclick="setPlatformFilter('console')" role="tab" aria-selected="false">Console</button>
+            <button class="platform-chip active" data-filter="all" onclick="setPlatformFilter('all')" role="tab" aria-selected="true">All<span class="platform-chip-count" data-count-for="all"></span></button>
+            <button class="platform-chip" data-filter="pc" onclick="setPlatformFilter('pc')" role="tab" aria-selected="false">PC<span class="platform-chip-count" data-count-for="pc"></span></button>
+            <button class="platform-chip" data-filter="console" onclick="setPlatformFilter('console')" role="tab" aria-selected="false">Console<span class="platform-chip-count" data-count-for="console"></span></button>
         </div>
     """
 
@@ -309,8 +309,12 @@ def tabs_script() -> str:
                 } else {
                     switchTab(currentTab);
                 }
+
+                if (typeof updatePlatformChipCounts === 'function') {
+                    updatePlatformChipCounts();
+                }
             }
-            
+
             function prevDate() {
                 const sections = document.querySelectorAll('.date-section');
                 if (currentDateIndex < sections.length - 1) {
@@ -459,6 +463,23 @@ def tabs_script() -> str:
                     chip.setAttribute('aria-selected', isActive ? 'true' : 'false');
                 });
                 updateTotalModsCount(filter);
+            }
+
+            function updatePlatformChipCounts() {
+                const activeSection = document.querySelector('.date-section.active');
+                const rows = activeSection
+                    ? activeSection.querySelectorAll('.mod-row')
+                    : [];
+                const counts = { all: 0, pc: 0, console: 0 };
+                rows.forEach(row => {
+                    if (rowMatchesFilter(row, 'all')) counts.all++;
+                    if (rowMatchesFilter(row, 'pc')) counts.pc++;
+                    if (rowMatchesFilter(row, 'console')) counts.console++;
+                });
+                document.querySelectorAll('.platform-chip-count').forEach(el => {
+                    const k = el.dataset.countFor;
+                    el.textContent = counts[k] != null ? counts[k].toLocaleString() : '';
+                });
             }
 
             function setPlatformFilter(filter) {

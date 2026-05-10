@@ -157,9 +157,9 @@ def _controls_row() -> str:
     <button class="today-btn" type="button" onclick="goToToday()">Today</button>
     <span class="ctrl-sep" aria-hidden="true"></span>
     <div class="platform-filter inline" role="tablist" aria-label="Filter by platform">
-        <button class="platform-chip active" data-filter="all" onclick="setPlatformFilter('all')" role="tab" aria-selected="true">All</button>
-        <button class="platform-chip" data-filter="pc" onclick="setPlatformFilter('pc')" role="tab" aria-selected="false">PC</button>
-        <button class="platform-chip" data-filter="console" onclick="setPlatformFilter('console')" role="tab" aria-selected="false">Console</button>
+        <button class="platform-chip active" data-filter="all" onclick="setPlatformFilter('all')" role="tab" aria-selected="true">All<span class="platform-chip-count" data-count-for="all"></span></button>
+        <button class="platform-chip" data-filter="pc" onclick="setPlatformFilter('pc')" role="tab" aria-selected="false">PC<span class="platform-chip-count" data-count-for="pc"></span></button>
+        <button class="platform-chip" data-filter="console" onclick="setPlatformFilter('console')" role="tab" aria-selected="false">Console<span class="platform-chip-count" data-count-for="console"></span></button>
     </div>
     <span class="ctrl-sep" aria-hidden="true"></span>
     <div class="sort-bar inline">

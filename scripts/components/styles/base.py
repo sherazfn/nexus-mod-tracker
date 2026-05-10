@@ -688,6 +688,25 @@ STYLES = """
             color: #1a1a1a;
             border-color: var(--gold-primary, #d4af37);
         }
+        .platform-chip-count {
+            display: inline-block;
+            margin-left: 0.4rem;
+            padding: 0 0.4rem;
+            min-width: 1.25rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            line-height: 1.1rem;
+            text-align: center;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            color: inherit;
+        }
+        .platform-chip-count:empty {
+            display: none;
+        }
+        .platform-chip.active .platform-chip-count {
+            background: rgba(0, 0, 0, 0.18);
+        }
 
         /* Sort selector bar */
         .sort-bar {
