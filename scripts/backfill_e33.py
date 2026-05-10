@@ -15,7 +15,7 @@ import requests
 from .scrape import DATA_DIR, get, load_existing, save, session
 
 SLUG = "clairobscurexpedition33"
-PROBE_AHEAD = 100  # probe this many IDs past the highest known mod_id
+PROBE_AHEAD = 1000  # probe this many IDs past the highest known mod_id
 
 
 def main() -> None:
