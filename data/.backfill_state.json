@@ -1,7 +1,7 @@
 {
   "baldursgate3": {
     "done": false,
-    "max_probed": 3000,
-    "next_id": 3001
+    "max_probed": 4000,
+    "next_id": 4001
   }
 }
