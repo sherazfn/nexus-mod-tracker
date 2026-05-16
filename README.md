@@ -12,7 +12,10 @@ Live site: https://sherazfn.github.io/nexus-mod-tracker/
 A scheduled GitHub Action runs daily at 06:37 UTC. It hits the Nexus
 `updated.json` endpoint for each game (1-week window), enriches changed
 mods with `/mods/{id}.json` and `/files.json`, merges into
-`data/{slug}.json`, regenerates `index.html`, commits, and deploys to Pages.
+`data/{slug}.json.gz`, regenerates `index.html`, commits, and deploys to Pages.
+
+Data files are stored gzip-compressed (`data/*.json.gz`) to stay well under
+GitHub's 100 MB per-file limit. The scraper reads and writes gzip transparently.
 
 Bootstrap: on the first run for a game (no existing data), the scraper
 uses `period=1m` to backfill a month of recent activity.
