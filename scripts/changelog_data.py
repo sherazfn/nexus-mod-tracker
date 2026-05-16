@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gzip
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -80,10 +81,10 @@ def _build_mod(slug: str, raw: dict) -> Mod:
 
 
 def get_mods(slug: str) -> dict[int, Mod]:
-    path = DATA_DIR / f"{slug}.json"
+    path = DATA_DIR / f"{slug}.json.gz"
     if not path.exists():
         return {}
-    with path.open() as f:
+    with gzip.open(path, "rt", encoding="utf-8") as f:
         raw_list = json.load(f)
     out: dict[int, Mod] = {}
     for raw in raw_list:

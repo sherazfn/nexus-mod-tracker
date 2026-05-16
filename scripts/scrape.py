@@ -8,6 +8,7 @@ ahead of any missed days.
 
 from __future__ import annotations
 
+import gzip
 import json
 import os
 import sys
@@ -55,19 +56,19 @@ def get(s: requests.Session, path: str) -> dict | list:
 
 
 def load_existing(slug: str) -> dict[int, dict]:
-    path = DATA_DIR / f"{slug}.json"
+    path = DATA_DIR / f"{slug}.json.gz"
     if not path.exists():
         return {}
-    with path.open() as f:
+    with gzip.open(path, "rt", encoding="utf-8") as f:
         items = json.load(f)
     return {m["mod_id"]: m for m in items}
 
 
 def save(slug: str, mods: dict[int, dict]) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    path = DATA_DIR / f"{slug}.json"
+    path = DATA_DIR / f"{slug}.json.gz"
     ordered = sorted(mods.values(), key=lambda m: m["mod_id"])
-    with path.open("w") as f:
+    with gzip.open(path, "wt", encoding="utf-8") as f:
         json.dump(ordered, f, indent=2, sort_keys=True)
 
 
