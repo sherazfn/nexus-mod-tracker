@@ -31,7 +31,7 @@ INFO_MODAL_HTML = """
                 <div class="modal-section">
                     <h3>Links</h3>
                     <p>
-                        <a href="https://github.com/sherazfn/bg3-mod-tracker" target="_blank" rel="noopener">View on GitHub</a>
+                        <a href="https://github.com/sherazfn/nexus-mod-tracker" target="_blank" rel="noopener">View on GitHub</a>
                     </p>
                     <p class="modal-credit">Forked from <a href="https://github.com/xKeeg/bg3-console-mod-tracker" target="_blank" rel="noopener">xKeeg/bg3-console-mod-tracker</a> &mdash; original work by xKeeg.</p>
                 </div>
