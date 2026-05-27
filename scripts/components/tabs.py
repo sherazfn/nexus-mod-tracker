@@ -356,18 +356,18 @@ def tabs_script() -> str:
             }
             
             function fetchLastChecked() {
-                fetch('https://api.github.com/repos/sherazfn/bg3-mod-tracker/actions/workflows/main.yml/runs?status=success&per_page=1')
+                fetch('https://api.github.com/repos/sherazfn/nexus-mod-tracker/actions/workflows/scrape.yml/runs?status=success&per_page=1')
                     .then(r => r.json())
                     .then(data => {
                         if (data.workflow_runs && data.workflow_runs.length > 0) {
                             const lastRun = new Date(data.workflow_runs[0].updated_at);
                             showToast(`Last checked: ${formatTimeAgo(lastRun)}`);
                         } else {
-                            showToast('Checked hourly');
+                            showToast('Checked daily');
                         }
                     })
                     .catch(() => {
-                        showToast('Checked hourly');
+                        showToast('Checked daily');
                     });
             }
             
